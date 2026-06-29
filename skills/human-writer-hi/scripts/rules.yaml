@@ -1,0 +1,276 @@
+# HI notes:
+# - Devanagari + \w: Python's default Unicode `re` matches Devanagari letters as
+#   \w, so the analyzer wraps each suspect-vocabulary phrase with re.escape +
+#   \b...\b and the boundaries behave correctly. Hindi postpositions (का/के/की,
+#   में, से, को, ने …) are written as SEPARATE tokens, so \b boundaries do not
+#   swallow them — the bare phrase matches cleanly.
+# - Suspect vocabulary covers Tier 1 + Tier 2 (~140 entries). Tier 3 is documented
+#   in references/tells-stylistic-hi.md but excluded here: false-positive risk on
+#   common Hindi words is too high for a per-word matcher.
+# - The "—" em-dash threshold is STRICTER than the master FR/EN (1.0): the wide
+#   em-dash "—" is foreign to the Devanagari script (Hindi has no native em-dash;
+#   asides use the danda, comma, or parentheses), so any "—" in Hindi prose reads
+#   as machine/translation output. Target 0; flag above 0.5 per 1000 words.
+# - latin_period_in_devanagari_max is the NEW HI typography threshold: the maximum
+#   number of Devanagari-containing sentences allowed to terminate with a Latin "."
+#   (instead of the danda "।") before the detector flags. Calibrated so clean
+#   native danda-using prose scores 0 misses and never fires. Register-sensitive:
+#   some modern web/Hinglish Hindi uses "." legitimately, hence the LOW weight.
+# - burstiness_min and comma_density_max are copied verbatim from the master
+#   thresholds block; they are currently UNREAD by analyze.py (vestigial). Keep
+#   them; do not treat their presence as a bug.
+hi:
+  suspect_vocabulary:
+    # --- Tier 1: high signal ---
+    # Connectors and meta-comments (the canonical Hindi AI topic-sentence frames)
+    - "यह ध्यान देने योग्य है"
+    - "यह उल्लेखनीय है"
+    - "यह ध्यान देने योग्य बात है"
+    - "गौरतलब है कि"
+    - "ध्यान देने वाली बात यह है कि"
+    - "यह कहना गलत नहीं होगा"
+    - "इसमें कोई संदेह नहीं"
+    - "इसमें कोई दो राय नहीं"
+    - "निःसंदेह"
+    - "निश्चित रूप से"
+    - "बिना किसी संदेह के"
+    - "जैसा कि हम सब जानते हैं"
+    - "जैसा कि सर्वविदित है"
+    - "इस संदर्भ में"
+    - "इस संबंध में"
+    - "इस दृष्टि से"
+    - "इस प्रकार"
+    - "इसके अतिरिक्त"
+    - "इसके अलावा"
+    - "दूसरी ओर"
+    - "वहीं दूसरी तरफ"
+    # Spatial-temporal abstractions
+    - "आज के युग में"
+    - "आज के इस युग में"
+    - "आज के दौर में"
+    - "वर्तमान समय में"
+    - "वर्तमान युग में"
+    - "डिजिटल युग में"
+    - "आधुनिक युग में"
+    - "तकनीक के इस युग में"
+    - "आज के समय में"
+    - "आज के डिजिटल युग में"
+    - "एक ऐसी दुनिया में जहाँ"
+    - "इक्कीसवीं सदी में"
+    - "तेजी से बदलती दुनिया में"
+    # Metaphorical inflators
+    - "क्रांतिकारी"
+    - "क्रांति"
+    - "अभूतपूर्व"
+    - "अत्याधुनिक"
+    - "अत्याधुनिक तकनीक"
+    - "नवीनतम तकनीक"
+    - "विश्वस्तरीय"
+    - "अग्रणी"
+    - "बेजोड़"
+    - "अद्वितीय"
+    - "अविस्मरणीय"
+    - "मजबूत"
+    - "सशक्त"
+    - "परिवर्तनकारी"
+    - "गेम-चेंजर"
+    - "मील का पत्थर"
+    - "आधारशिला"
+    - "रीढ़ की हड्डी"
+    - "महत्वपूर्ण भूमिका निभाता है"
+    - "महत्वपूर्ण भूमिका निभाती है"
+    # Verbs / verbal phrases AI overuses
+    - "अनलॉक करें"
+    - "क्षमता को अनलॉक करें"
+    - "सशक्त बनाता है"
+    - "सशक्त बनाने"
+    - "गहराई से जानें"
+    - "गहराई में उतरें"
+    - "आइए जानें"
+    - "आइए समझते हैं"
+    - "आइए जानते हैं"
+    - "आइए एक नज़र डालते हैं"
+    - "खोज करें"
+    - "अन्वेषण करें"
+    - "परिदृश्य"
+
+    # --- Tier 2: medium signal ---
+    # Verbs
+    - "अनुकूलित करें"
+    - "अनुकूलित"
+    - "सुव्यवस्थित"
+    - "सरल बनाना"
+    - "सुनिश्चित करता है"
+    - "सुनिश्चित करना"
+    - "प्रदान करता है"
+    - "बढ़ावा देता है"
+    - "बढ़ावा देना"
+    - "सुगम बनाता है"
+    - "सुविधा प्रदान करता है"
+    - "लागू करना"
+    - "क्रियान्वित करना"
+    - "उजागर करना"
+    - "प्रकट करना"
+    - "रूपांतरित करना"
+    # Adjectives of importance / intensity
+    - "महत्वपूर्ण"
+    - "अत्यंत महत्वपूर्ण"
+    - "आवश्यक"
+    - "अनिवार्य"
+    - "अपरिहार्य"
+    - "उल्लेखनीय"
+    - "उत्कृष्ट"
+    - "असाधारण"
+    - "अविश्वसनीय"
+    - "शानदार"
+    - "बेहतरीन"
+    - "प्रभावशाली"
+    - "अद्भुत"
+    - "नवीन"
+    - "नवाचार"
+    - "शक्तिशाली"
+    - "सहज"
+    - "उपयोगकर्ता-अनुकूल"
+    - "सुरुचिपूर्ण"
+    # Abstract nouns
+    - "तालमेल"
+    - "पारिस्थितिकी तंत्र"
+    - "ब्रह्मांड"
+    - "दुनिया"
+    - "यात्रा"
+    - "समाधान"
+    - "अनुभव"
+    - "संभावनाओं की दुनिया"
+    - "विकल्पों की एक विस्तृत श्रृंखला"
+    - "असंख्य"
+    - "अनेक"
+    - "प्रचुरता"
+    - "दृष्टिकोण"
+    - "रणनीति"
+    # Connectors (overuse)
+    - "तथा"
+    - "एवं"
+    - "अतः"
+    - "इसलिए"
+    - "परिणामस्वरूप"
+    - "फलस्वरूप"
+    - "तदनुसार"
+    - "हालांकि"
+    - "तथापि"
+    - "किंतु"
+    - "परंतु"
+    - "वस्तुतः"
+    - "दरअसल"
+    # Conclusion / summary openers
+    - "अंत में"
+    - "निष्कर्ष में"
+    - "निष्कर्षतः"
+    - "संक्षेप में"
+    - "सारांश में"
+    - "कुल मिलाकर"
+    - "अंततः"
+    - "समापन में"
+  ai_constructions:
+    # --- High severity (banned outright) ---
+    - pattern: "यह न केवल .*? बल्कि"
+      severity: high
+    - pattern: "न केवल .*? बल्कि .*? भी"
+      severity: high
+    - pattern: "आज के युग में"
+      severity: high
+    - pattern: "आज के इस युग में"
+      severity: high
+    - pattern: "वर्तमान समय में"
+      severity: high
+    - pattern: "डिजिटल युग में"
+      severity: high
+    - pattern: "एक ऐसी दुनिया में जहाँ"
+      severity: high
+    - pattern: "कल्पना कीजिए एक ऐसी दुनिया की"
+      severity: high
+    - pattern: "गहराई से जानें"
+      severity: high
+    - pattern: "गहराई में उतरें"
+      severity: high
+    - pattern: "आइए जानें"
+      severity: high
+    - pattern: "आइए समझते हैं"
+      severity: high
+    - pattern: "यह ध्यान देने योग्य है"
+      severity: high
+    - pattern: "गौरतलब है कि"
+      severity: high
+    - pattern: "निःसंदेह"
+      severity: high
+    - pattern: "इसमें कोई संदेह नहीं"
+      severity: high
+    - pattern: "क्षमता को अनलॉक करें"
+      severity: high
+    # --- Medium severity (rare-only) ---
+    - pattern: "चाहे आप .*? हों या"
+      severity: medium
+    - pattern: "क्या आपने कभी सोचा है"
+      severity: medium
+    - pattern: "आइए इसे विस्तार से समझते हैं"
+      severity: medium
+    - pattern: "आइए एक नज़र डालते हैं"
+      severity: medium
+    - pattern: "तो चलिए शुरू करते हैं"
+      severity: medium
+    - pattern: "इस लेख में हम"
+      severity: medium
+    - pattern: "इस ब्लॉग में हम"
+      severity: medium
+    - pattern: "तो देर किस बात की"
+      severity: medium
+    - pattern: "महत्वपूर्ण भूमिका निभात"
+      severity: medium
+    # --- Low severity (flag only at high frequency) ---
+    - pattern: "अंत में,"
+      severity: low
+    - pattern: "निष्कर्ष में,"
+      severity: low
+    - pattern: "संक्षेप में,"
+      severity: low
+    - pattern: "कुल मिलाकर,"
+      severity: low
+    - pattern: "अंततः,"
+      severity: low
+  thresholds:
+    # HI: the wide em-dash "—" is FOREIGN to Devanagari (Hindi has no native
+    # em-dash; asides use the danda, comma, or parentheses). Any "—" reads as
+    # machine/translation output. Stricter than the master 1.0: flag above 0.5
+    # per 1000 words. Target 0.
+    em_dash_per_1000_words: 0.5
+    burstiness_min: 8.0
+    # Relaxed from 8.0 to 7.5 (2026-06-25): real native Wikipedia prose measured
+    # stdev ~7.85 — a borderline false positive. The deliberate-AI fixture sits at
+    # 9.5+ so the burstiness flag never fires on it; relaxing does not weaken it.
+    sentence_stdev_min: 7.5
+    # HI: with the Devanagari-aware WORD_RX tokenizer (whole Devanagari runs,
+    # not `\w`-shattered subwords), clean native Hindi TTR measures ~0.53–0.78,
+    # comparable to Latin prose, so the master 0.45 threshold holds. (The earlier
+    # ~0.20 readings were an artifact of `\w` splitting words on matras; that bug
+    # is fixed.) Verified: editorial 0.60, marketing 0.59, borderline 0.78, and
+    # the dense-repetitive AI fixture 0.53 all stay above 0.45 — TTR does not
+    # false-fire on clean prose and is not the lever the AI fixture relies on.
+    lexical_diversity_min: 0.45
+    comma_density_max: 2.0
+    bullet_parallelism_max: 0.80
+    # NEW HI typography detector: max number of Devanagari-containing sentences
+    # allowed to terminate with a Latin "." (instead of the danda "।") before
+    # flagging. 0 = strict (any Latin-period-on-a-Devanagari-sentence flags).
+    # Clean native danda-using prose scores 0 misses, so it never fires.
+    latin_period_in_devanagari_max: 0
+
+content_type_weights:
+  marketing:     {statistical: 1.0, stylistic: 1.0, structural: 1.0}
+  short-comms:   {statistical: 0.6, stylistic: 1.2, structural: 0.5}
+  technical:     {statistical: 0.5, stylistic: 0.7, structural: 0.3}
+  editorial-seo: {statistical: 0.9, stylistic: 1.0, structural: 1.0}
+
+verdict_bands:
+  LOW_RISK: [0, 24]
+  MEDIUM_RISK: [25, 49]
+  HIGH_RISK: [50, 74]
+  CRITICAL: [75, 100]
